@@ -444,5 +444,191 @@ def logout():
     flash('You have been logged out', 'success')
     return redirect(url_for('login'))
 
+@app.route('/matplotlib-charts/<chart_type>')
+@login_required
+def matplotlib_charts(chart_type):
+    """Generate Matplotlib charts on the server side"""
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    from matplotlib.figure import Figure
+    import io
+    import base64
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'})
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        
+        # Get technician data
+        expertise = session.get('technician_expertise')
+        location = session.get('technician_location')
+        technician_name = session.get('technician_name')
+        
+        # Create a figure with custom styling
+        plt.style.use('dark_background')  # Dark theme to match our application
+        fig = Figure(figsize=(10, 6))
+        ax = fig.subplots()
+        
+        # Set the title with technician info
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        title_text = f'Analytics for {technician_name} - {expertise} - {location}\nGenerated: {timestamp}'
+        
+        if chart_type == 'daily':
+            # Daily appointment trend
+            cur.execute("""
+                SELECT DATE(created_at) as date, COUNT(*) as count
+                FROM appointments 
+                WHERE location = %s 
+                AND intent LIKE %s
+                AND created_at >= NOW() - INTERVAL '14 days'
+                GROUP BY DATE(created_at)
+                ORDER BY date
+            """, (location, f"%{expertise}%"))
+            
+            daily_data = cur.fetchall()
+            
+            if not daily_data:
+                ax.text(0.5, 0.5, 'No data available for the selected period', 
+                       horizontalalignment='center', verticalalignment='center')
+            else:
+                # Convert to pandas DataFrame for easier manipulation
+                df = pd.DataFrame(daily_data)
+                df['date'] = pd.to_datetime(df['date'])
+                df = df.sort_values('date')
+                
+                # Plot the data
+                ax.plot(df['date'], df['count'], marker='o', linestyle='-', linewidth=2)
+                ax.set_title(f'Daily Appointments Trend\n{title_text}')
+                ax.set_xlabel('Date')
+                ax.set_ylabel('Number of Appointments')
+                ax.grid(True, alpha=0.3)
+                
+                # Format x-axis to show dates properly
+                fig.autofmt_xdate()
+                
+                # Add data labels
+                for i, count in enumerate(df['count']):
+                    ax.annotate(str(count), (df['date'].iloc[i], count),
+                               textcoords="offset points", xytext=(0,5), ha='center')
+        
+        elif chart_type == 'issues':
+            # Issue types distribution
+            cur.execute("""
+                SELECT intent, COUNT(*) as count
+                FROM appointments 
+                WHERE location = %s 
+                AND intent LIKE %s
+                GROUP BY intent
+                ORDER BY count DESC
+                LIMIT 8
+            """, (location, f"%{expertise}%"))
+            
+            issues_data = cur.fetchall()
+            
+            if not issues_data:
+                ax.text(0.5, 0.5, 'No data available for issue types', 
+                       horizontalalignment='center', verticalalignment='center')
+            else:
+                # Convert to pandas DataFrame
+                df = pd.DataFrame(issues_data)
+                
+                # Create horizontal bar chart
+                bars = ax.barh(df['intent'], df['count'], color=plt.cm.viridis(np.linspace(0, 1, len(df))))
+                ax.set_title(f'Issue Types Distribution\n{title_text}')
+                ax.set_xlabel('Number of Appointments')
+                ax.set_ylabel('Issue Type')
+                
+                # Add count labels to bars
+                for bar in bars:
+                    width = bar.get_width()
+                    ax.annotate(f'{width}',
+                              xy=(width, bar.get_y() + bar.get_height()/2),
+                              xytext=(3, 0),  # 3 points horizontal offset
+                              textcoords="offset points",
+                              ha='left', va='center')
+                
+                # Adjust layout for better display of long text
+                plt.tight_layout()
+        
+        elif chart_type == 'pie':
+            # Pie chart of issue types
+            cur.execute("""
+                SELECT intent, COUNT(*) as count
+                FROM appointments 
+                WHERE location = %s 
+                AND intent LIKE %s
+                GROUP BY intent
+                ORDER BY count DESC
+            """, (location, f"%{expertise}%"))
+            
+            issues_data = cur.fetchall()
+            
+            if not issues_data:
+                ax.text(0.5, 0.5, 'No data available for issue types', 
+                       horizontalalignment='center', verticalalignment='center')
+            else:
+                # Convert to pandas DataFrame
+                df = pd.DataFrame(issues_data)
+                
+                # Generate colors
+                colors = plt.cm.tab10(np.linspace(0, 1, len(df)))
+                
+                # Create pie chart
+                wedges, texts, autotexts = ax.pie(
+                    df['count'], 
+                    labels=df['intent'],
+                    autopct='%1.1f%%',
+                    colors=colors,
+                    shadow=True,
+                    startangle=90,
+                    textprops={'color': 'white'}
+                )
+                
+                # Ensure pie is drawn as a circle
+                ax.axis('equal')
+                ax.set_title(f'Issue Types Distribution (Pie Chart)\n{title_text}')
+                
+                # Make labels more readable
+                plt.setp(autotexts, size=9, weight="bold")
+                plt.setp(texts, size=8)
+                
+                # Add legend for better readability with many categories
+                if len(df) > 5:
+                    ax.legend(df['intent'], loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+        
+        else:
+            return jsonify({'error': 'Invalid chart type'})
+        
+        # Close database connection
+        cur.close()
+        conn.close()
+        
+        # Save plot to a temporary buffer and convert to base64 for embedding
+        buf = io.BytesIO()
+        fig.tight_layout()
+        fig.savefig(buf, format='png', dpi=100)
+        buf.seek(0)
+        
+        # For direct download as file
+        if request.args.get('download') == 'true':
+            buf.seek(0)
+            filename = f"matplotlib_{chart_type}_chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            return Response(
+                buf.getvalue(),
+                mimetype='image/png',
+                headers={"Content-Disposition": f"attachment;filename={filename}"}
+            )
+        
+        # For displaying in browser or embedding
+        data = base64.b64encode(buf.getvalue()).decode('utf-8')
+        return f"<img src='data:image/png;base64,{data}'/>"
+        
+    except Exception as e:
+        logger.error(f"Error generating Matplotlib chart: {e}")
+        return jsonify({'error': str(e)})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

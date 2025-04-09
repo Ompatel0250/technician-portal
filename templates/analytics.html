@@ -86,7 +86,7 @@
     
     <!-- Additional Info -->
     <div class="row">
-        <div class="col-12">
+        <div class="col-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h5>Performance Insights</h5>
@@ -118,6 +118,64 @@
                             {% endif %}
                         </ul>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Matplotlib Analytics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-chart-line me-2"></i>Advanced Analytics (Matplotlib)</h5>
+                    <div class="btn-group">
+                        <a href="{{ url_for('matplotlib_charts', chart_type='daily', download='true') }}" class="btn btn-sm btn-outline-primary" 
+                           data-spinner="true" data-spinner-message="Generating daily trend chart...">
+                            <i class="fas fa-download me-1"></i> Daily Trend
+                        </a>
+                        <a href="{{ url_for('matplotlib_charts', chart_type='issues', download='true') }}" class="btn btn-sm btn-outline-primary"
+                           data-spinner="true" data-spinner-message="Generating issues chart...">
+                            <i class="fas fa-download me-1"></i> Issues Bar Chart
+                        </a>
+                        <a href="{{ url_for('matplotlib_charts', chart_type='pie', download='true') }}" class="btn btn-sm btn-outline-primary"
+                           data-spinner="true" data-spinner-message="Generating pie chart...">
+                            <i class="fas fa-download me-1"></i> Issues Pie Chart
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">Daily Trend (Last 14 Days)</div>
+                                <div class="card-body text-center" id="matplotlib-daily-container">
+                                    <div class="spinner-border text-primary mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="loading-text">Loading Matplotlib chart...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">Issues Distribution (Pie Chart)</div>
+                                <div class="card-body text-center" id="matplotlib-pie-container">
+                                    <div class="spinner-border text-primary mb-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="loading-text">Loading Matplotlib chart...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            These charts are generated on the server using Python's Matplotlib library, allowing for 
+                            advanced data processing and visualization capabilities.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,6 +278,62 @@
                 alert('An error occurred while exporting chart. Please try again.');
             }
         }
+        
+        // Load Matplotlib charts
+        function loadMatplotlibCharts() {
+            // Function to load and display a matplotlib chart
+            function loadMatplotlibChart(chartType, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                // Show loading spinner
+                container.innerHTML = `
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="loading-text">Loading Matplotlib chart...</p>`;
+                
+                // Fetch the chart from the server
+                fetch(`{{ url_for('matplotlib_charts', chart_type='dummy') }}`.replace('dummy', chartType))
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Replace container content with the chart
+                        container.innerHTML = html;
+                        
+                        // Add a download button below the chart
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = `{{ url_for('matplotlib_charts', chart_type='dummy', download='true') }}`.replace('dummy', chartType);
+                        downloadLink.className = 'btn btn-sm btn-outline-secondary mt-2';
+                        downloadLink.innerHTML = '<i class="fas fa-download me-1"></i> Download this chart';
+                        
+                        // Add spinner attributes for loading feedback
+                        downloadLink.setAttribute('data-spinner', 'true');
+                        downloadLink.setAttribute('data-spinner-message', 'Preparing download...');
+                        
+                        container.appendChild(downloadLink);
+                    })
+                    .catch(error => {
+                        console.error('Error loading Matplotlib chart:', error);
+                        container.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Error loading chart. Please try again later.
+                            </div>`;
+                    });
+            }
+            
+            // Load the daily and pie charts
+            loadMatplotlibChart('daily', 'matplotlib-daily-container');
+            loadMatplotlibChart('pie', 'matplotlib-pie-container');
+        }
+        
+        // Initialize Matplotlib charts
+        loadMatplotlibCharts();
     });
 </script>
 {% endblock %}
