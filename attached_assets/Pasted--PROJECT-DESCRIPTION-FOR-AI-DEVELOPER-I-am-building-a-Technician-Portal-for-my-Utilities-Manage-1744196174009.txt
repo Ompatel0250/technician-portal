@@ -1,0 +1,115 @@
+📌 PROJECT DESCRIPTION FOR AI / DEVELOPER:
+I am building a Technician Portal for my Utilities Management AI System. This portal should be:
+
+Connected to my existing PostgreSQL database (running on AWS EC2 server with Flask backend)
+
+Integrated with my WhatsApp + Dialogflow bot, which stores appointment data into a table called appointments
+
+The technicians table already exists and contains 39 technician entries (with name, email, expertise, location, and contact)
+
+💻 SYSTEM STACK:
+Backend: Flask (Python 3)
+
+Frontend: HTML5 + Bootstrap (responsive, professional design)
+
+Database: PostgreSQL
+
+Charting: Chart.js or Plotly.js (for analytics)
+
+🗂 DATABASE TABLES:
+📄 1. appointments
+sql
+Copy
+Edit
+CREATE TABLE appointments (
+    id SERIAL PRIMARY KEY,
+    intent TEXT,
+    name TEXT,
+    problem_description TEXT,
+    location TEXT,
+    contact TEXT,
+    time_slot TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+📄 2. technicians
+sql
+Copy
+Edit
+CREATE TABLE technicians (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    expertise TEXT NOT NULL,
+    location TEXT NOT NULL,
+    contact TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL
+);
+✅ PAGES REQUIRED:
+1. 🔐 Technician Login Page
+Email + password login
+
+Credentials fetched from technicians table
+
+Use Flask sessions to manage login
+
+2. 📊 Technician Dashboard
+Show today's appointments
+
+Filter by technician’s expertise and location
+
+Should pull real-time data from appointments table
+
+3. 👤 Profile Page
+Show technician's info (name, expertise, location, contact, email)
+
+4. 📅 Appointment History
+List of all previous appointments (sorted by date)
+
+5. 📈 Analytics Page
+Show:
+
+Number of appointments handled
+
+Appointments per day (bar chart)
+
+Types of issues handled (pie chart)
+
+Use Chart.js for interactive charts
+
+6. 🚪 Logout Page
+Clear session and redirect to login
+
+🔗 ROUTES NEEDED (Flask):
+/login → GET/POST login
+
+/dashboard → View today’s appointments
+
+/profile → Technician profile
+
+/history → Appointment history
+
+/analytics → Charts
+
+/logout → Logout session
+
+🔐 SECURITY:
+Passwords can be stored as plain for now (but ideally hashed using bcrypt)
+
+No need for registration right now — data is pre-filled in DB
+
+🔌 CONNECTION DETAILS:
+python
+Copy
+Edit
+psycopg2.connect(
+    host="localhost",
+    dbname="utilities_db",
+    user="utilities_user",
+    password="securepassword"
+)
+✅ Goal:
+The portal should fetch technician’s data by email login, display only their related appointments, and show analytics based on what they’ve handled.
+
+✨ Final Note:
+This is a utility-based AI system (Dialogflow + WhatsApp + Flask + PostgreSQL). The technician portal is for viewing bookings made via WhatsApp.
+
