@@ -15,11 +15,24 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.environ.get("SESSION_SECRET", "default_secret_key"))
 
 # Database connection function
 def get_db_connection():
     try:
+        # First try to use DATABASE_URL (common in Railway, Heroku, Render)
+        database_url = os.environ.get("DATABASE_URL")
+        
+        if database_url:
+            # Handle Heroku's postgres:// vs postgresql:// issue
+            if database_url.startswith("postgres://"):
+                database_url = database_url.replace("postgres://", "postgresql://", 1)
+            
+            conn = psycopg2.connect(database_url)
+            conn.autocommit = True
+            return conn
+        
+        # Fall back to individual parameters
         conn = psycopg2.connect(
             host=os.environ.get("PGHOST", "localhost"),
             dbname=os.environ.get("PGDATABASE", "utilities_db"),
@@ -644,4 +657,6 @@ def matplotlib_charts(chart_type):
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Use PORT environment variable if available (commonly used by hosting providers)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
