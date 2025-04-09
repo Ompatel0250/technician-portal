@@ -1,0 +1,43 @@
+
+ id |      name       |      expertise      |  location   |            contact            | password
+----+-----------------+---------------------+-------------+-------------------------------+----------
+  1 | Alice Johnson   | Electrical          | New York    | alice@example.com             | pass123
+  2 | Bob Smith       | Plumbing            | Los Angeles | bob@example.com               | pass123
+  3 | Charlie Davis   | HVAC                | Chicago     | charlie@example.com           | pass123
+  4 | Ramesh Patel    | Electrical          | Ahmedabad   | ramesh.patel@example.com      | pass123
+  5 | Suresh Mehta    | Plumbing            | Ahmedabad   | suresh.mehta@example.com      | pass123
+  6 | Amit Trivedi    | Gas_Problem         | Surat       | amit.trivedi@example.com      | pass123
+  7 | Priya Shah      | AC_Repair_Cleaning  | Vadodara    | priya.shah@example.com        | pass123
+  8 | Kiran Joshi     | Lock_Repair         | Rajkot      | kiran.joshi@example.com       | pass123
+  9 | Nidhi Sharma    | Carpenter_Request   | Ahmedabad   | nidhi.sharma@example.com      | pass123
+ 10 | Manish Desai    | Power_Outage        | Surat       | manish.desai@example.com      | pass123
+ 11 | Jignesh Solanki | Switchboard_Issue   | Ahmedabad   | jignesh.solanki@example.com   | pass123
+ 12 | Alka Verma      | Leaking_Pipe        | Vadodara    | alka.verma@example.com        | pass123
+ 13 | Vikas Rana      | Elevator_Issue      | Ahmedabad   | vikas.rana@example.com        | pass123
+ 14 | Deepa Shah      | General_Electrician | Rajkot      | deepa.shah@example.com        | pass123
+ 15 | Ravi Tripathi   | AC_Repair_Cleaning  | Ahmedabad   | ravi.tripathi@example.com     | pass123
+ 16 | Komal Patel     | Gas_Problem         | Vadodara    | komal.patel@example.com       | pass123
+ 17 | Nirav Thakkar   | Power_Outage        | Surat       | nirav.thakkar@example.com     | pass123
+ 18 | Bhavin Shah     | Lock_Repair         | Ahmedabad   | bhavin.shah@example.com       | pass123
+ 19 | Dipika Mehta    | Leaking_Pipe        | Rajkot      | dipika.mehta@example.com      | pass123
+ 20 | Ankita Bhatt    | Switchboard_Issue   | Surat       | ankita.bhatt@example.com      | pass123
+ 21 | Harshad Jain    | Elevator_Issue      | Vadodara    | harshad.jain@example.com      | pass123
+ 22 | Tanvi Modi      | General_Electrician | Ahmedabad   | tanvi.modi@example.com        | pass123
+ 23 | Chirag Desai    | Carpenter_Request   | Surat       | chirag.desai@example.com      | pass123
+ 24 | Aakash Sharma   | Gas_Problem         | Gandhinagar | aakash.sharma@gasfix.in       | pass123
+ 25 | Pravin Joshi    | Gas_Problem         | Gandhinagar | pravin.joshi@gasfix.in        | pass123
+ 26 | Ritika Patel    | AC_Repair_Cleaning  | Gandhinagar | ritika.patel@coolservice.in   | pass123
+ 27 | Sahil Mehra     | AC_Repair_Cleaning  | Gandhinagar | sahil.mehra@cooltech.in       | pass123
+ 28 | Mahesh Parmar   | Leaking_Pipe        | Gandhinagar | mahesh.parmar@pipepro.in      | pass123
+ 29 | Kavita Solanki  | Leaking_Pipe        | Gandhinagar | kavita.solanki@pipecheck.in   | pass123
+ 30 | Hitesh Patel    | Power_Outage        | Gandhinagar | hitesh.patel@elecfix.in       | pass123
+ 31 | Sneha Shah      | General_Electrician | Gandhinagar | sneha.shah@elecworks.in       | pass123
+ 32 | Jatin Rana      | Switchboard_Issue   | Gandhinagar | jatin.rana@switchpro.in       | pass123
+ 33 | Aarti Dave      | Switchboard_Issue   | Gandhinagar | aarti.dave@boardrepair.in     | pass123
+ 34 | Vimal Desai     | Lock_Repair         | Gandhinagar | vimal.desai@locksecure.in     | pass123
+ 35 | Radhika Bhatt   | Lock_Repair         | Gandhinagar | radhika.bhatt@doorlock.in     | pass123
+ 36 | Tejas Thakkar   | Carpenter_Request   | Gandhinagar | tejas.thakkar@woodcraft.in    | pass123
+ 37 | Divya Panchal   | Carpenter_Request   | Gandhinagar | divya.panchal@furniturefix.in | pass123
+ 38 | Ajay Chauhan    | Elevator_Issue      | Gandhinagar | ajay.chauhan@liftcare.in      | pass123
+ 39 | Pooja Gohil     | Elevator_Issue      | Gandhinagar | pooja.gohil@elevatortech.in   | pass123
+(39 rows)
