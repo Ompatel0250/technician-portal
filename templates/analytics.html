@@ -5,11 +5,23 @@
 {% block head %}
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<!-- FileSaver.js for saving chart images -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
+        <div class="export-buttons">
+            <a href="{{ url_for('export_analytics_csv') }}" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-file-csv me-1"></i> Export Report (CSV)
+            </a>
+            <button id="exportChartsBtn" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-file-image me-1"></i> Export Charts (PNG)
+            </button>
+        </div>
+    </div>
     
     <!-- Analytics Data (Hidden) -->
     <script id="analytics-data" type="application/json">
@@ -114,4 +126,83 @@
 {% block scripts %}
 <!-- Analytics Charts JS -->
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart export functionality
+        const exportChartsBtn = document.getElementById('exportChartsBtn');
+        if (exportChartsBtn) {
+            exportChartsBtn.addEventListener('click', function() {
+                exportCharts();
+            });
+        }
+
+        function exportCharts() {
+            // Get the current date for filename
+            const now = new Date();
+            const timestamp = now.getFullYear().toString() +
+                           ('0' + (now.getMonth() + 1)).slice(-2) +
+                           ('0' + now.getDate()).slice(-2) + '_' +
+                           ('0' + now.getHours()).slice(-2) +
+                           ('0' + now.getMinutes()).slice(-2) +
+                           ('0' + now.getSeconds()).slice(-2);
+                           
+            // Export Daily Trend chart
+            const dailyChart = document.getElementById('appointmentsPerDayChart');
+            if (dailyChart) {
+                exportChartAsPNG(dailyChart, `daily_trend_${timestamp}.png`);
+            }
+            
+            // Export Issue Types chart
+            // Switch to the Issues tab first to ensure chart is rendered
+            document.getElementById('issues-tab').click();
+            setTimeout(function() {
+                const issuesChart = document.getElementById('issuesTypeChart');
+                if (issuesChart) {
+                    exportChartAsPNG(issuesChart, `issues_distribution_${timestamp}.png`);
+                }
+                
+                // Switch back to the Daily tab
+                document.getElementById('daily-tab').click();
+            }, 300);
+        }
+        
+        function exportChartAsPNG(chartCanvas, filename) {
+            // Add technician information as watermark
+            const expertise = '{{ session.get("technician_expertise") }}';
+            const location = '{{ session.get("technician_location") }}';
+            const technician = '{{ session.get("technician_name") }}';
+            
+            try {
+                // Create a new canvas with extra space for watermark
+                const newCanvas = document.createElement('canvas');
+                const ctx = newCanvas.getContext('2d');
+                
+                // Set dimensions
+                newCanvas.width = chartCanvas.width;
+                newCanvas.height = chartCanvas.height + 40; // Extra space for watermark
+                
+                // Draw original chart
+                ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#212529';
+                ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+                ctx.drawImage(chartCanvas, 0, 0);
+                
+                // Add watermark
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Technician: ${technician} | Expertise: ${expertise} | Location: ${location} | Generated: ${new Date().toLocaleString()}`, 10, chartCanvas.height + 20);
+                
+                // Convert to image and download
+                newCanvas.toBlob(function(blob) {
+                    saveAs(blob, filename);
+                });
+                
+            } catch (error) {
+                console.error('Error exporting chart:', error);
+                alert('An error occurred while exporting chart. Please try again.');
+            }
+        }
+    });
+</script>
 {% endblock %}

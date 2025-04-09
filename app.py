@@ -1,8 +1,11 @@
 import os
+import csv
+import io
+import json
 import logging
 from datetime import datetime
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, jsonify
 import psycopg2
 import psycopg2.extras
 
@@ -171,7 +174,8 @@ def analytics():
         AND intent LIKE %s
     """, (location, f"%{expertise}%"))
     
-    total_count = cur.fetchone()['total_appointments']
+    total_count_result = cur.fetchone()
+    total_count = total_count_result['total_appointments'] if total_count_result else 0
     
     # Appointments per day (last 7 days)
     cur.execute("""
@@ -217,6 +221,222 @@ def analytics():
     }
     
     return render_template('analytics.html', analytics_data=analytics_data)
+
+@app.route('/export/history/csv')
+@login_required
+def export_history_csv():
+    conn = get_db_connection()
+    if not conn:
+        flash('Could not connect to database', 'danger')
+        return redirect(url_for('history'))
+    
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # Get technician data
+    expertise = session.get('technician_expertise')
+    location = session.get('technician_location')
+    
+    # Find all appointments matching technician expertise and location
+    cur.execute("""
+        SELECT * FROM appointments 
+        WHERE location = %s 
+        AND intent LIKE %s 
+        ORDER BY created_at DESC
+    """, (location, f"%{expertise}%"))
+    
+    appointments = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Date', 'Time Slot', 'Client Name', 'Issue Type', 'Problem Description', 'Location', 'Contact'])
+    
+    # Write appointment data
+    for appointment in appointments:
+        writer.writerow([
+            appointment['created_at'].strftime('%Y-%m-%d'),
+            appointment['time_slot'],
+            appointment['name'],
+            appointment['intent'],
+            appointment['problem_description'],
+            appointment['location'],
+            appointment['contact']
+        ])
+    
+    # Prepare response
+    output.seek(0)
+    now = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"appointment_history_{now}.csv"
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
+
+@app.route('/export/analytics/csv')
+@login_required
+def export_analytics_csv():
+    conn = get_db_connection()
+    if not conn:
+        flash('Could not connect to database', 'danger')
+        return redirect(url_for('analytics'))
+    
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # Get technician data
+    expertise = session.get('technician_expertise')
+    location = session.get('technician_location')
+    technician_name = session.get('technician_name')
+    
+    # Get analytics data
+    
+    # Daily appointment counts
+    cur.execute("""
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM appointments 
+        WHERE location = %s 
+        AND intent LIKE %s
+        AND created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date
+    """, (location, f"%{expertise}%"))
+    
+    daily_data = cur.fetchall()
+    
+    # Issue type distribution
+    cur.execute("""
+        SELECT intent, COUNT(*) as count
+        FROM appointments 
+        WHERE location = %s 
+        AND intent LIKE %s
+        GROUP BY intent
+        ORDER BY count DESC
+    """, (location, f"%{expertise}%"))
+    
+    issues_data = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write report header
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    writer.writerow(['Analytics Report'])
+    writer.writerow(['Generated on:', now])
+    writer.writerow(['Technician:', technician_name])
+    writer.writerow(['Expertise:', expertise])
+    writer.writerow(['Location:', location])
+    writer.writerow([])
+    
+    # Write daily appointments section
+    writer.writerow(['Daily Appointments (Last 7 Days)'])
+    writer.writerow(['Date', 'Number of Appointments'])
+    for row in daily_data:
+        writer.writerow([row['date'].strftime('%Y-%m-%d'), row['count']])
+    writer.writerow([])
+    
+    # Write issue types section
+    writer.writerow(['Issue Types Distribution'])
+    writer.writerow(['Issue Type', 'Number of Appointments'])
+    for row in issues_data:
+        writer.writerow([row['intent'], row['count']])
+    
+    # Prepare response
+    output.seek(0)
+    now = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"analytics_report_{now}.csv"
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
+
+@app.route('/export/chart-data')
+@login_required
+def export_chart_data():
+    """Return chart data as JSON for client-side chart export"""
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'})
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        
+        # Get technician data
+        expertise = session.get('technician_expertise')
+        location = session.get('technician_location')
+        
+        # Total appointments
+        cur.execute("""
+            SELECT COUNT(*) as total_appointments
+            FROM appointments 
+            WHERE location = %s 
+            AND intent LIKE %s
+        """, (location, f"%{expertise}%"))
+        
+        total_count_result = cur.fetchone()
+        total_count = total_count_result['total_appointments'] if total_count_result else 0
+        
+        # Appointments per day (last 7 days)
+        cur.execute("""
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM appointments 
+            WHERE location = %s 
+            AND intent LIKE %s
+            AND created_at >= NOW() - INTERVAL '7 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        """, (location, f"%{expertise}%"))
+        
+        daily_data = cur.fetchall()
+        
+        # Types of issues handled
+        cur.execute("""
+            SELECT intent, COUNT(*) as count
+            FROM appointments 
+            WHERE location = %s 
+            AND intent LIKE %s
+            GROUP BY intent
+            ORDER BY count DESC
+        """, (location, f"%{expertise}%"))
+        
+        issues_data = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        # Format data for charts
+        dates = [row['date'].strftime('%Y-%m-%d') for row in daily_data]
+        daily_counts = [row['count'] for row in daily_data]
+        
+        issues = [row['intent'] for row in issues_data]
+        issue_counts = [row['count'] for row in issues_data]
+        
+        return jsonify({
+            'technician': {
+                'name': session.get('technician_name'),
+                'expertise': expertise,
+                'location': location
+            },
+            'total_count': total_count,
+            'dates': dates,
+            'daily_counts': daily_counts,
+            'issues': issues,
+            'issue_counts': issue_counts,
+            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+    except Exception as e:
+        logger.error(f"Error exporting chart data: {e}")
+        return jsonify({'error': str(e)})
 
 @app.route('/logout')
 def logout():
