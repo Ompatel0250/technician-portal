@@ -1,0 +1,45 @@
+/* Custom styles for the Technician Portal */
+.logo {
+  height: 40px;
+}
+
+.sidebar {
+  min-height: calc(100vh - 56px);
+}
+
+.card-dashboard {
+  transition: transform 0.3s;
+}
+
+.card-dashboard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  margin-bottom: 30px;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  color: white;
+  margin: 0 auto 20px;
+}
+
+.login-container {
+  max-width: 450px;
+  margin: 100px auto;
+}
+
+.appointment-details {
+  margin-top: 20px;
+}

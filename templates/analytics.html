@@ -1,0 +1,117 @@
+{% extends 'layout.html' %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
+    
+    <!-- Analytics Data (Hidden) -->
+    <script id="analytics-data" type="application/json">
+        {{ analytics_data | tojson }}
+    </script>
+    
+    <div class="row">
+        <!-- Total Appointments Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Total Appointments</h5>
+                    <div class="display-4 mt-3 mb-3">
+                        {{ analytics_data.total_count }}
+                    </div>
+                    <p class="card-text">Total appointments matching your expertise and location</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Analytics Section -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="analyticsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily Trend</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="issues-tab" data-bs-toggle="tab" data-bs-target="#issues" type="button" role="tab" aria-controls="issues" aria-selected="false">Issue Types</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="analyticsTabContent">
+                        <!-- Daily Trend Tab -->
+                        <div class="tab-pane fade show active" id="daily" role="tabpanel" aria-labelledby="daily-tab">
+                            <div class="chart-container">
+                                <canvas id="appointmentsPerDayChart"></canvas>
+                            </div>
+                            <div class="text-center mt-3 text-muted">
+                                <small>Showing appointment data for the last 7 days</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Issue Types Tab -->
+                        <div class="tab-pane fade" id="issues" role="tabpanel" aria-labelledby="issues-tab">
+                            <div class="chart-container">
+                                <canvas id="issuesTypeChart"></canvas>
+                            </div>
+                            <div class="text-center mt-3 text-muted">
+                                <small>Distribution of different types of issues handled</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Info -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Performance Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> These analytics are based on appointments matching your expertise 
+                        ({{ session.get('technician_expertise') }}) and location ({{ session.get('technician_location') }}).
+                    </div>
+                    
+                    <!-- Empty State Check -->
+                    {% if analytics_data.total_count == 0 %}
+                        <div class="alert alert-secondary text-center">
+                            <i class="fas fa-chart-area me-2"></i> There is not enough data to generate meaningful insights at this time.
+                        </div>
+                    {% else %}
+                        <p>
+                            Based on your appointment history, here are some insights:
+                        </p>
+                        <ul>
+                            {% if analytics_data.issue_counts %}
+                                <li>Your most common issue type is <strong>{{ analytics_data.issues[0] }}</strong> 
+                                    ({{ analytics_data.issue_counts[0] }} appointments).</li>
+                            {% endif %}
+                            
+                            {% if analytics_data.dates %}
+                                <li>Your busiest day was <strong>{{ analytics_data.dates|last }}</strong> 
+                                    with {{ analytics_data.daily_counts|last }} appointments.</li>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Analytics Charts JS -->
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'layout.html' %}
+
+{% block title %}Appointment History{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="fas fa-history me-2"></i>Appointment History</h2>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">All Appointments</h4>
+                <div>
+                    <select id="sortFilter" class="form-select form-select-sm">
+                        <option value="latest">Latest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if appointments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time Slot</th>
+                                <th>Client</th>
+                                <th>Issue</th>
+                                <th>Location</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTable">
+                            {% for appointment in appointments %}
+                            <tr data-date="{{ appointment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}">
+                                <td>{{ appointment.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ appointment.time_slot }}</td>
+                                <td>{{ appointment.name }}</td>
+                                <td>{{ appointment.intent }}</td>
+                                <td>{{ appointment.location }}</td>
+                                <td>{{ appointment.contact }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info view-details" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#appointmentDetailsModal"
+                                            data-appointment-id="{{ appointment.id }}"
+                                            data-appointment-name="{{ appointment.name }}"
+                                            data-appointment-problem="{{ appointment.problem_description }}"
+                                            data-appointment-intent="{{ appointment.intent }}"
+                                            data-appointment-location="{{ appointment.location }}"
+                                            data-appointment-contact="{{ appointment.contact }}"
+                                            data-appointment-time="{{ appointment.time_slot }}"
+                                            data-appointment-date="{{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-secondary text-center p-5">
+                    <i class="fas fa-clipboard fa-4x mb-3"></i>
+                    <h4>No appointment history</h4>
+                    <p>There are no past appointments that match your expertise and location.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-labelledby="appointmentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="appointmentDetailsModalLabel">Appointment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="appointmentDetails">
+                    <p><strong>Client:</strong> <span id="modalName"></span></p>
+                    <p><strong>Issue:</strong> <span id="modalIntent"></span></p>
+                    <p><strong>Description:</strong> <span id="modalProblem"></span></p>
+                    <p><strong>Location:</strong> <span id="modalLocation"></span></p>
+                    <p><strong>Contact:</strong> <span id="modalContact"></span></p>
+                    <p><strong>Time Slot:</strong> <span id="modalTimeSlot"></span></p>
+                    <p><strong>Created On:</strong> <span id="modalDate"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle modal data display
+        const appointmentDetailsModal = document.getElementById('appointmentDetailsModal');
+        if (appointmentDetailsModal) {
+            appointmentDetailsModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                
+                // Extract data from data attributes
+                const name = button.getAttribute('data-appointment-name');
+                const problem = button.getAttribute('data-appointment-problem');
+                const intent = button.getAttribute('data-appointment-intent');
+                const location = button.getAttribute('data-appointment-location');
+                const contact = button.getAttribute('data-appointment-contact');
+                const timeSlot = button.getAttribute('data-appointment-time');
+                const date = button.getAttribute('data-appointment-date');
+                
+                // Set modal content
+                document.getElementById('modalName').textContent = name;
+                document.getElementById('modalProblem').textContent = problem;
+                document.getElementById('modalIntent').textContent = intent;
+                document.getElementById('modalLocation').textContent = location;
+                document.getElementById('modalContact').textContent = contact;
+                document.getElementById('modalTimeSlot').textContent = timeSlot;
+                document.getElementById('modalDate').textContent = date;
+            });
+        }
+        
+        // Handle sorting
+        const sortFilter = document.getElementById('sortFilter');
+        if (sortFilter) {
+            sortFilter.addEventListener('change', function() {
+                sortAppointments(this.value);
+            });
+        }
+        
+        function sortAppointments(sortOrder) {
+            const table = document.getElementById('appointmentsTable');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            rows.sort(function(a, b) {
+                const dateA = new Date(a.getAttribute('data-date'));
+                const dateB = new Date(b.getAttribute('data-date'));
+                
+                if (sortOrder === 'oldest') {
+                    return dateA - dateB;
+                } else {
+                    return dateB - dateA;
+                }
+            });
+            
+            // Clear table and append sorted rows
+            while (table.firstChild) {
+                table.removeChild(table.firstChild);
+            }
+            
+            rows.forEach(function(row) {
+                table.appendChild(row);
+            });
+        }
+    });
+</script>
+{% endblock %}

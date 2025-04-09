@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4"><i class="fas fa-user me-2"></i>Technician Profile</h2>
+    
+    {% if technician %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-image">
+                        {{ technician.name[0] | upper }}
+                    </div>
+                    <h3>{{ technician.name }}</h3>
+                    <p class="text-muted">{{ technician.expertise }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4>Personal Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">
+                            <i class="fas fa-envelope me-2"></i>Email:
+                        </div>
+                        <div class="col-md-8">
+                            {{ technician.email }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">
+                            <i class="fas fa-phone me-2"></i>Contact:
+                        </div>
+                        <div class="col-md-8">
+                            {{ technician.contact }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">
+                            <i class="fas fa-map-marker-alt me-2"></i>Location:
+                        </div>
+                        <div class="col-md-8">
+                            {{ technician.location }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">
+                            <i class="fas fa-tools me-2"></i>Expertise:
+                        </div>
+                        <div class="col-md-8">
+                            {{ technician.expertise }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h4>Access Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>If you need to update your information or reset your password, please contact the system administrator.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>Could not retrieve profile information. Please try again later.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Today's Appointments</h2>
+        <div class="text-muted">
+            <i class="fas fa-calendar-day me-1"></i> {{ now_date }}
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i> Showing appointments for your expertise ({{ session.get('technician_expertise') }}) 
+        in your location ({{ session.get('technician_location') }})
+    </div>
+
+    {% if appointments %}
+        <div class="row">
+            {% for appointment in appointments %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card card-dashboard h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ appointment.name }}</h5>
+                        <span class="badge bg-primary">{{ appointment.time_slot }}</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong><i class="fas fa-tag me-1"></i> Issue:</strong> {{ appointment.intent }}<br>
+                            <strong><i class="fas fa-info-circle me-1"></i> Description:</strong> {{ appointment.problem_description }}<br>
+                            <strong><i class="fas fa-map-marker-alt me-1"></i> Location:</strong> {{ appointment.location }}<br>
+                            <strong><i class="fas fa-phone me-1"></i> Contact:</strong> {{ appointment.contact }}<br>
+                        </p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Created: {{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-secondary text-center p-5">
+            <i class="fas fa-clipboard-check fa-4x mb-3"></i>
+            <h4>No appointments scheduled for today</h4>
+            <p>There are currently no appointments that match your expertise and location for today.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add current date to the page
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = now.toLocaleDateString('en-US', options);
+        document.querySelector('.text-muted i').nextSibling.textContent = " " + formattedDate;
+    });
+</script>
+{% endblock %}
