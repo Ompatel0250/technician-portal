@@ -14,10 +14,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
         <div class="export-buttons">
-            <a href="{{ url_for('export_analytics_csv') }}" class="btn btn-sm btn-outline-secondary me-2">
+            <a href="{{ url_for('export_analytics_csv') }}" class="btn btn-sm btn-outline-secondary me-2"
+               data-spinner="true" data-spinner-message="Generating analytics report...">
                 <i class="fas fa-file-csv me-1"></i> Export Report (CSV)
             </a>
-            <button id="exportChartsBtn" class="btn btn-sm btn-outline-primary">
+            <button id="exportChartsBtn" class="btn btn-sm btn-outline-primary"
+                    data-spinner="true" data-spinner-message="Generating chart images...">
                 <i class="fas fa-file-image me-1"></i> Export Charts (PNG)
             </button>
         </div>
@@ -132,8 +134,17 @@
         // Chart export functionality
         const exportChartsBtn = document.getElementById('exportChartsBtn');
         if (exportChartsBtn) {
+            // Remove data-spinner attribute since we'll handle the spinner manually
+            exportChartsBtn.removeAttribute('data-spinner');
+            
             exportChartsBtn.addEventListener('click', function() {
-                exportCharts();
+                // Show overlay spinner
+                showOverlaySpinner(null, "Generating chart images...");
+                
+                // Add small delay to ensure spinner shows up before processing
+                setTimeout(function() {
+                    exportCharts();
+                }, 200);
             });
         }
 
@@ -156,6 +167,7 @@
             // Export Issue Types chart
             // Switch to the Issues tab first to ensure chart is rendered
             document.getElementById('issues-tab').click();
+            
             setTimeout(function() {
                 const issuesChart = document.getElementById('issuesTypeChart');
                 if (issuesChart) {
@@ -164,7 +176,12 @@
                 
                 // Switch back to the Daily tab
                 document.getElementById('daily-tab').click();
-            }, 300);
+                
+                // Hide spinner after exports are done
+                setTimeout(function() {
+                    hideOverlaySpinner();
+                }, 500);
+            }, 500);
         }
         
         function exportChartAsPNG(chartCanvas, filename) {

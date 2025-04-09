@@ -16,6 +16,8 @@
         in your location ({{ session.get('technician_location') }})
     </div>
 
+    <!-- Dashboard content wrapper with ID for spinner -->
+    <div id="dashboard-content">
     {% if appointments %}
         <div class="row">
             {% for appointment in appointments %}
@@ -47,17 +49,35 @@
             <p>There are currently no appointments that match your expertise and location for today.</p>
         </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Add current date to the page
     document.addEventListener('DOMContentLoaded', function() {
+        // Show loading spinner on dashboard content
+        showSpinner('dashboard-content', 'Loading today\'s appointments...');
+        
+        // Add current date to the page
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = now.toLocaleDateString('en-US', options);
         document.querySelector('.text-muted i').nextSibling.textContent = " " + formattedDate;
+        
+        // Simulate loading delay for demo purposes (remove in production)
+        setTimeout(function() {
+            hideSpinner('dashboard-content');
+            
+            // Add shimmer effect to appointment cards
+            const cards = document.querySelectorAll('.card-dashboard');
+            cards.forEach(function(card) {
+                card.classList.add('is-loading');
+                setTimeout(function() {
+                    card.classList.remove('is-loading');
+                }, 800);
+            });
+        }, 800);
     });
 </script>
 {% endblock %}
