@@ -495,7 +495,12 @@ def matplotlib_charts(chart_type):
                        horizontalalignment='center', verticalalignment='center')
             else:
                 # Convert to pandas DataFrame for easier manipulation
-                df = pd.DataFrame(daily_data)
+                # Extract data from the DictRows into lists
+                dates = [row['date'] for row in daily_data]
+                counts = [row['count'] for row in daily_data]
+                
+                # Create DataFrame with explicit column names
+                df = pd.DataFrame({'date': dates, 'count': counts})
                 df['date'] = pd.to_datetime(df['date'])
                 df = df.sort_values('date')
                 
@@ -532,8 +537,12 @@ def matplotlib_charts(chart_type):
                 ax.text(0.5, 0.5, 'No data available for issue types', 
                        horizontalalignment='center', verticalalignment='center')
             else:
-                # Convert to pandas DataFrame
-                df = pd.DataFrame(issues_data)
+                # Extract data from the DictRows into lists
+                intents = [row['intent'] for row in issues_data]
+                counts = [row['count'] for row in issues_data]
+                
+                # Create DataFrame with explicit column names
+                df = pd.DataFrame({'intent': intents, 'count': counts})
                 
                 # Create horizontal bar chart
                 bars = ax.barh(df['intent'], df['count'], color=plt.cm.viridis(np.linspace(0, 1, len(df))))
@@ -570,8 +579,12 @@ def matplotlib_charts(chart_type):
                 ax.text(0.5, 0.5, 'No data available for issue types', 
                        horizontalalignment='center', verticalalignment='center')
             else:
-                # Convert to pandas DataFrame
-                df = pd.DataFrame(issues_data)
+                # Extract data from the DictRows into lists
+                intents = [row['intent'] for row in issues_data]
+                counts = [row['count'] for row in issues_data]
+                
+                # Create DataFrame with explicit column names
+                df = pd.DataFrame({'intent': intents, 'count': counts})
                 
                 # Generate colors
                 colors = plt.cm.tab10(np.linspace(0, 1, len(df)))
